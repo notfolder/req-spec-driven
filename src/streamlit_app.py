@@ -1,11 +1,24 @@
 import streamlit as st
 import pandas as pd
 from typing import List
+import sys
+import numpy as np  # <-- 追加した行
 
-# ローカルで定義したモジュールをインポート（実際には相対パスや適切なインポート処理が必要だが、今回は簡略化）
-from src.data_processor import DataProcessor
-from src.analysis_engine import AnalysisEngine
-from src.logger_manager import logger
+# *** パス設定によるモジュールインポートエラーの修正 ***
+# プロジェクトルートをPythonパスに追加することで、内部モジュールの参照を可能にする
+sys.path.append(".")
+try:
+    from src.data_processor import DataProcessor
+    from src.analysis_engine import AnalysisEngine
+    from src.logger_manager import logger
+
+except ModuleNotFoundError as e:
+    st.error(
+        f"🚨 モジュールインポートエラーが発生しました。パス設定を確認してください: {e}"
+    )
+    # エラーが発生した場合は処理を停止する
+    sys.exit(1)
+
 
 # 初期セットアップ：ログマネージャーのインスタンスを取得
 logger_manager = logger()
@@ -125,5 +138,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # 環境変数やシミュレーション実行のためのダミーデータの生成処理をここに入れることも可能
     main()

@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy import stats
-import matplotlib.pyplot as plt
-# 共通正規化処理は utils/utils.py などに定義されていると仮定
+import matplotlib.pyplot as plt  # ★★★ 追加：Figureオブジェクトを操作するために必要
 
 
 class AnalysisEngine:
@@ -48,7 +47,7 @@ class AnalysisEngine:
 
     def calculate_qqplot(self, data: np.ndarray) -> plt.Figure:
         """
-        データのQ-Qプロットを生成する（正規性の簡易チェック）。
+        データのQ-Qプロットを生成し、matplotlib Figureオブジェクトとして返す。
 
         Args:
             data (np.ndarray): 分析対象の一次元データ配列。
@@ -61,12 +60,9 @@ class AnalysisEngine:
                 "Q-Qプロットを生成するには、少なくとも2つのデータポイントが必要です。"
             )
 
-        # scipyのstats.probplotを使用するのが標準的
-        stat_result = stats.probplot(data, dist="norm", plot=plt)
-
-        self.logger.log_event(
-            "ANALYZE_START",
-            "Q-Qプロット生成を開始しました。",
-            "データの正規性チェックを実行しました。",
-        )
-        return stat_result.fig
+        # 新しいFigureとAxesを作成し、そこに描画を行うため、plot=plt の指定は行わず、
+        # プロット関数自体が返すオブジェクトを取得するロジックに変更します。
+        fig, ax = plt.subplots()
+        stats.probplot(data, dist="norm", plot=ax)  # 'plot=ax' を使用して描画先を指定
+        plt.close(fig)  # メモリリークを防ぐため、figureを閉じる (重要)
+        return fig
