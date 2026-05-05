@@ -6,7 +6,7 @@ description: >
   「要件定義して」「要件定義書を作りたい」「システムを作りたい」「仕様を決めたい」などの発言があれば必ずこのスキルを使うこと。
   要件定義・要件整理・業務要件・機能要件・非機能要件に関する作業では必ず本スキルを起動すること。
 metadata:
-  version: "1.0.12"
+  version: "1.0.13"
 ---
 
 # isdd-requirements — インタビュー駆動 要件定義スキル
@@ -20,6 +20,8 @@ metadata:
 
 - 選択肢を伴う質問を提示する際は、エージェント環境が提供するインタラクティブな選択肢提示ツールが利用可能であれば必ず活用すること（例: VS Code Copilot では `vscode_askQuestions`、Claude Code では `AskUserQuestion`、opencode では `question`）。
 - ツールが利用できない環境では、テキスト形式で選択肢を列挙して提示すること。
+- 選択肢を提示する際は、`isdd-common/references/hearing-complexity-rules.md` を必ず適用し、各選択肢に複雑さ（1-5）と根拠を表示した上で、最小複雑さの案を推奨すること。
+- 推奨より高複雑な案が選択された場合は、`isdd-common/references/hearing-complexity-rules.md` の再確認ゲートを必ず実施すること。
 
 ## 開始ゲート（最優先・必須）
 
