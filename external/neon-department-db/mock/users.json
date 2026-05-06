@@ -1,0 +1,8 @@
+[
+  {"user_id": "U001", "user_name": "テストユーザー01", "department_id": "D001"},
+  {"user_id": "U002", "user_name": "テストユーザー02", "department_id": "D002"},
+  {"user_id": "U003", "user_name": "テストユーザー03", "department_id": "D003"},
+  {"user_id": "U004", "user_name": "テストユーザー04", "department_id": "D004"},
+  {"user_id": "U005", "user_name": "テストユーザー05", "department_id": "D005"},
+  {"user_id": "admin", "user_name": "管理者", "department_id": "D005"}
+]

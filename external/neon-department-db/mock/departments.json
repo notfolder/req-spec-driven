@@ -1,0 +1,7 @@
+[
+  {"department_id": "D001", "department_name": "営業部"},
+  {"department_id": "D002", "department_name": "開発部"},
+  {"department_id": "D003", "department_name": "人事部"},
+  {"department_id": "D004", "department_name": "経理部"},
+  {"department_id": "D005", "department_name": "情報システム部"}
+]
