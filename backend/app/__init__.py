@@ -1,0 +1,1 @@
+"""要件トレーサビリティ: 要件ID: RQ-BZ-EQUIPMENT-LOAN-MANAGEMENT 設計ID: DS-MD-BACKEND-APP-FT-MANAGE-EQUIPMENT 要件概要: 備品貸出管理業務をWebアプリとして提供する。 設計概要: バックエンドアプリとして認証、認可、備品、利用者、貸出返却を提供する。 呼び出し先: DS-MD-BACKEND-CONFIG-OP-INITIAL-ADMIN-ENV, DS-CL-AUTH-SERVICE-FT-LOGIN 呼び出し元: DS-IF-NGINX-ROUTING-UI-WEB-GUI"""
