@@ -1,32 +1,47 @@
 # isdd スキル群
 
-**isdd（Interview-driven Spec-driven Development）** は、インタビュー駆動で仕様書を作り、仕様書からコードへのトレーサビリティを保ちながら開発を進める仕様駆動開発メソッドです。
+isdd（Interview-driven Spec-driven Development）は、インタビュー駆動で仕様を確定し、要件から設計、設計から実装へと一貫して追跡可能な形で開発を進めるための手法です。
 
-本ディレクトリはその実践を支援する Agent Skills のセットです。
+このディレクトリは、isdd を実行するためのスキル群の原本を APM 形式で管理します。
 
 ---
 
-## 背景・設計思想
+## 本リポジトリでの APM 運用
 
-AIに「適当に」コードを生成させると次の2つの問題が発生する。
+このリポジトリでは、スキルの編集対象と展開先を明確に分離します。
 
-1. **改良のたびに既存機能が壊れる** — 要件が曖昧なままだとAIが勝手に解釈して設計意図を無視した上書きをする。
-2. **コードレビューができない** — 非エンジニアはコードを読めず、エンジニアでもAIが短時間で生成した数千行を全行レビューするのは非現実的。
+- 編集対象（原本）: .apm/skills
+- 展開先（生成物）: .agents/skills と .claude/skills
 
-isdd はこの問題を「古典的なウォーターフォール（要件定義書 → 設計書 → コード）をAIに適用する」ことで解決する。
+運用上の扱いは次のとおりです。
 
+1. スキルの編集は必ず .apm/skills で行う。
+2. 展開先ディレクトリの内容は手編集しない。
+3. 展開反映は apm install で行う。
+4. 差分整合の確認は apm audit で行う。
+
+展開ターゲットは apm.yml で claude と agent-skills を固定しているため、apm install の実行で .claude/skills と .agents/skills の双方へ同時に展開されます。
+
+```mermaid
+flowchart TD
+    A[.apm/skills を編集] --> B[apm install を実行]
+    B --> C[.agents/skills に展開]
+    B --> D[.claude/skills に展開]
+    C --> E[apm audit で整合確認]
+    D --> E
 ```
-要件定義書 → 設計書 → コード
-```
 
-**コードレビューが不要になる根拠：** AIに「要件定義書・設計書に従ってコードを書く」と指示するため、設計書が正しければコードも正しくなる。人間がレビューするのは設計書の「画面遷移図」と「画面イメージ」だけでよく、DB設計やクラス設計の確認は不要。
+---
 
-**非エンジニアが使える根拠：** kiroのようなEARS形式（`WHEN/IF/THEN + モジュール名`）ではなく、AIがユーザーに1問ずつ平易な言葉で質問するインタビュー形式を採用している。修正すべきドラフトを渡すより、質問に答える方が参入障壁が低い。
+## 背景と目的
 
-**仕様書のポイント：**
-- 各要件に「この機能が無いと何が困るか」の根拠を明示させる（曖昧な要件の排除）
-- 将来拡張・一般論・ベストプラクティスを勝手に追加しない（スコープ膨張の防止）
-- 不足情報があればユーザーに質問し、完全になるまで終了しない（AIのサボり防止）
+isdd は、AI 実装で起こりやすい次の問題を抑制することを目的とします。
+
+1. 要件の曖昧さによる意図しない実装差分
+2. 変更時の影響範囲不明による品質低下
+3. 仕様とコードの対応関係が失われることによる保守性低下
+
+そのため、isdd では要件と設計を先に確定し、実装では要件 ID と設計 ID を基準にトレーサビリティを維持します。
 
 ---
 
@@ -36,21 +51,21 @@ isdd はこの問題を「古典的なウォーターフォール（要件定義
 
 ```mermaid
 graph TD
-    G1[開始ゲート\n業務課題確定・外部連携有無・既存ソースコード有無・isdd運用有無を確認]
-    PRE[isdd-external-precheck\n外部連携リスク事前確認]
-    REV1[isdd-reverse-engineering\n既存PJを先にisdd化]
+    G1[開始ゲート\n業務課題確定・外部連携有無・既存コード有無を確認]
+    PRE[isdd-external-precheck\n外部連携事前確認]
+    REV[isdd-reverse-engineering\n既存プロジェクトの仕様化]
     REQ[isdd-requirements\n要件定義]
-    EX[isdd-external-research\n外部連携整合調査]
+    EX[isdd-external-research\n外部仕様整合確認]
     DES[isdd-design\n詳細設計]
     COD[isdd-traceable-coding\n実装]
 
     G1 -->|外部連携あり| PRE
     G1 -->|外部連携なし| REQ
-    G1 -->|既存ソースコードあり かつ isdd運用なし/不明| REV1
-    PRE -->|要件定義の開始前に実行| REQ
-    REV1 -->|成果物確定後に要件定義へ| REQ
-    REQ --> DES
-    REQ -->|外部連携がある場合のみ実行| EX
+    G1 -->|既存コードあり かつ isdd未導入| REV
+    PRE --> REQ
+    REV --> REQ
+    REQ -->|外部連携あり| EX
+    REQ -->|外部連携なし| DES
     EX --> DES
     DES --> COD
 ```
@@ -59,171 +74,81 @@ graph TD
 
 ```mermaid
 graph TD
-    G2[開始ゲート\n業務課題確定と外部連携有無を確認]
-    PRE[isdd-external-precheck\n外部連携リスク事前確認]
+    G2[開始ゲート\n業務課題と外部連携有無を確認]
+    PRE[isdd-external-precheck\n外部連携事前確認]
     CREQ[isdd-change-req\n変更要件定義]
-    EX[isdd-external-research\n外部連携整合調査]
+    EX[isdd-external-research\n外部仕様整合確認]
     CDES[isdd-change-design\n変更詳細設計]
     COD[isdd-traceable-coding\n実装]
 
     G2 -->|外部連携あり| PRE
     G2 -->|外部連携なし| CREQ
-    PRE -->|変更要件定義の開始前に実行| CREQ
-    CREQ --> CDES
-    CREQ -->|外部連携がある場合のみ実行| EX
+    PRE --> CREQ
+    CREQ -->|外部連携あり| EX
+    CREQ -->|外部連携なし| CDES
     EX --> CDES
     CDES --> COD
 ```
 
-### 既存PJ適用フロー
+### 既存プロジェクト適用フロー
 
 ```mermaid
 graph TD
-    A[コード解析\ncode-structure-analyzerで実行]
-    B[設計書生成\nID未採番]
-    C[要件定義書生成]
-    D[インタビューで補完・修正]
-    E[設計書へのDS-*ID採番]
-    F[RQ-DS Link Checker実行]
-    G[トレーサブルコメント追加]
-    H[Trace Comment Coverage Checker実行]
-    I[セルフレビュー・報告]
+    A[コード構造解析]
+    B[要件定義書の逆引き生成]
+    C[詳細設計書の逆引き生成]
+    D[インタビュー補完]
+    E[ID採番と整合確認]
+    F[トレーサブルコメント適用]
+    G[自己検証と報告]
 
-    A --> B --> C --> D --> E --> F --> G --> H --> I
+    A --> B --> C --> D --> E --> F --> G
 ```
 
 ---
 
 ## スキル一覧
 
-### 新規開発フロー
-
 | スキル名 | 役割 | 主な成果物 |
 |---|---|---|
-| `isdd-external-precheck` | 要件定義前に外部連携システムの接続可否・認証方式・主要制限のみを確認する軽量事前調査。外部連携がある場合のみ実行する | `precheck_report.md` |
-| `isdd-requirements` | 業務課題（`RQ-BK-*`）を先に確定し、課題に紐づく要件のみで MVP に絞った矛盾のない要件定義書を作成する | `docs/requirements.md` |
-| `isdd-external-research` | 要件定義書または変更要件定義書の出力後に、外部連携システムの詳細調査を行い要件との整合性を確認する。外部連携がある場合のみ実行する | `alignment_report.md`、`external/[システム名]/docs/research.md`、`src/`、`mock/`、`e2e/` |
-| `isdd-design` | 要件定義書をもとに詳細設計書を作成し、実装タスクを生成する | `docs/detail_design.md`、`docs/tasks.md` |
-| `isdd-traceable-coding` | 要件ID・設計IDをコードコメントに付与し、仕様とコードのトレーサビリティを維持する | 各ソースファイルへのIDコメント付与 |
-
-### 変更フロー
-
-| スキル名 | 役割 | 主な成果物 |
-|---|---|---|
-| `isdd-change-req` | 変更対象の業務課題（`RQ-BK-*`）を先に確定し、課題に紐づく変更要件のみで変更要件定義書を作成する。変更は「[追加]」「[削除]」で表現し「変更」は使わない | `.history/[YYYYMMDD]-[タスク名]/change_requirements.md` |
-| `isdd-change-design` | 変更要件定義書をもとに変更詳細設計書を作成し、差分設計の網羅性をチェックする | `.history/[YYYYMMDD]-[タスク名]/change_detail_design.md`、`docs/tasks.md` |
-
-### 既存PJ適用フロー
-
-| スキル名 | 役割 | 主な成果物 |
-|---|---|---|
-| `isdd-reverse-engineering` | 既存ソースコードから要件定義書・設計書を逆引き生成し、トレーサブルコメントを追加する。コード解析は `code-structure-analyzer` サブエージェントに委譲する | `docs/requirements.md`、`docs/detail_design.md` |
+| isdd-requirements | インタビュー駆動で要件定義書を作成する | docs/requirements.md |
+| isdd-design | 要件定義書から詳細設計書と実装タスクを作成する | docs/detail_design.md、docs/tasks.md |
+| isdd-change-req | 既存要件に対する変更要件定義書を作成する | .history 配下の change_requirements.md |
+| isdd-change-design | 変更要件から変更詳細設計書と実装タスクを作成する | .history 配下の change_detail_design.md、docs/tasks.md |
+| isdd-external-precheck | 外部連携の接続可否・認証方式・主要制限を事前確認する | precheck_report.md |
+| isdd-external-research | 外部連携先の詳細仕様を調査し要件との整合を確認する | alignment_report.md、external 配下調査成果物 |
+| isdd-reverse-engineering | 既存コードから要件・設計を逆引きし isdd 化する | docs/requirements.md、docs/detail_design.md |
+| isdd-traceable-coding | 要件 ID と設計 ID に基づく実装コメント規則を適用する | 各ソースファイルのトレーサブルコメント |
+| isdd-common | 共通参照ルールを提供する基盤スキル | skills/isdd-common/references 配下の定義ファイル |
 
 ---
 
 ## サブエージェント一覧
 
-各スキルが特定の処理を委譲するサブエージェント。エージェントファイルは `.claude/agents/` に格納する。
-
-| エージェント名 | 委譲元スキル | 役割 |
+| エージェント名 | 主な利用スキル | 役割 |
 |---|---|---|
-| `code-structure-analyzer` | `isdd-reverse-engineering` | 既存ソースコードの構造解析（大量のコード読み込みをメイン会話から隔離） |
-| `external-research-investigator` | `isdd-external-research` | 外部連携ライブラリ候補の調査・評価（比較表・推奨理由・リスク評価を返却） |
-| `db-schema-extractor` | `isdd-external-research` | DB接続または公開リファレンスからスキーマ情報を抽出（`.env` 未作成時は停止、秘密情報は出力しない） |
+| code-structure-analyzer | isdd-reverse-engineering | 既存コードの構造解析を分離実行する |
+| external-research-investigator | isdd-external-research | 外部ライブラリ候補の調査と評価を実行する |
+| db-schema-extractor | isdd-external-research | 外部 DB スキーマ情報の抽出を実行する |
 
 ---
 
-## チェックスクリプト一覧
+## 共通リファレンス
 
-`isdd-reverse-engineering` スキルが自動実行する検証スクリプト。格納場所は `.agents/skills/isdd-reverse-engineering/scripts/`。
-
-| スクリプト名 | 実行タイミング | 役割 |
-|---|---|---|
-| `rq_ds_link_checker.py` | 要件定義書・設計書の逆引き生成後 | 要件ID（`RQ-*`）と設計ID（`DS-*`）の対応欠落・重複・不整合を検出する |
-| `trace_comment_coverage_checker.py` | トレーサブルコメント付与後 | コードへのID付与状況を検査し、未付与・不足・カバレッジ率をレポートする |
-
----
-
-## 共通リファレンス（`isdd-common/references/`）
-
-全スキルから参照する共通定義ファイル群。各スキルの SKILL.md から参照するのみで、直接編集は原則行わない。
+isdd-common の references 配下に、全スキルで参照する共通ルールを格納します。
 
 | ファイル | 内容 |
 |---|---|
-| `id-definitions.md` | 要件ID（`RQ-*`）・設計ID（`DS-*`）の体系・命名規則の完全定義 |
-| `document-rules.md` | 仕様書・設計書の作成ルール（markdown形式、mermaid使用、コード例禁止など） |
-| `requirements-chapters.md` | 要件定義書の必須章立て（セクション1〜6）とCRUDテーブル形式の定義 |
-| `design-chapters.md` | 詳細設計書の必須章立て（言語・FW選定、DB設計、E2Eテスト設計を含む全セクション） |
-| `design-completeness.md` | 詳細設計書の完全性チェックリスト |
-| `design-tasks-rules.md` | `tasks.md` 作成ルール（実装タスクの粒度・形式） |
+| id-definitions.md | 要件 ID と設計 ID の定義 |
+| document-rules.md | 仕様書・設計書の記述ルール |
+| requirements-chapters.md | 要件定義書の章構成 |
+| design-chapters.md | 詳細設計書の章構成 |
+| design-completeness.md | 設計網羅性の確認ルール |
+| design-tasks-rules.md | 実装タスク化のルール |
+| hearing-complexity-rules.md | ヒアリング共通ルール |
 
 ---
 
 ## バージョン管理
 
-各スキルの `SKILL.md` frontmatter に `metadata.version` でバージョンを管理する。
-
-```yaml
-metadata:
-  version: "1.0.9"
-```
-
-ある程度の検証をしたら、スキル群を全て同じバージョンに揃えてリリースバージョンを振り直す。
-
----
-
-## 対応AIツール
-
-isdd スキル群は以下のAIツールで使用できる。スキルファイルの格納場所はツールによって異なる。
-
-| ディレクトリ | GitHub Copilot | Claude Code | OpenCode | Codex |
-|---|:---:|:---:|:---:|:---:|
-| `.agents/skills/` | ✓ | ✗ | ✓ | ✓ |
-| `.claude/skills/` | ✓ | ✓ | ✓ | ✗ |
-
-4ツール全カバーのため、本リポジトリでは `.agents/skills/` と `.claude/skills/` をハードリンクで同期している。どちらのディレクトリを編集しても同じファイルを更新することになる。
-
-**各ツールのスキル起動方法：**
-
-| ツール | 起動方法 |
-|---|---|
-| GitHub Copilot | プロンプト内容に応じて自動選択 |
-| Claude Code | `/skill-name` で明示起動、またはプロンプトに応じて自動起動 |
-| OpenCode | `$skill-name` または `/skill-name` で明示起動 |
-| Codex | プロンプト内で `$skill-name` を使った明示起動、または説明に基づく自動起動 |
-
----
-
-## 技術選定ポリシー
-
-`isdd-design` および `isdd-change-design` で設計書を生成する際のデフォルト技術選定ルール。特段の理由がなければ以下を採用する。
-
-### 言語・フレームワーク
-
-| 条件 | 採用技術 |
-|---|---|
-| 特段の理由がない場合 | Python |
-| GUIが必要でシンプルな画面遷移 | Python + Streamlit |
-| GUIが必要で複雑な画面遷移・部品が必要 | Vue (Vuetify) + FastAPI |
-
-Vue + FastAPI 構成の場合、以下を設計書に**必ず**明記する。
-- フロントエンド：マルチステージビルドで npm ビルド後 nginx で配信
-- バックエンド：nginx でリバースプロキシ（エンドポイントは `/api/`）
-
-### データベース
-
-| 条件 | 採用DB |
-|---|---|
-| ~100万件以内かつ単純なアプリ | SQLite |
-| 上記以外 | PostgreSQL |
-
-DBが不要な場合は設計書に「DB設計は行わない」と明記する。
-
-### 起動方式
-
-すべてのシステムは **docker compose** で起動することを前提に設計する。DB スキーマ・初期ユーザーなどの初期化は起動時に自動化する。
-
-### コード品質
-
-- クラス設計は **SOLID原則** を遵守する
-- Python コーディングは **PEP8** に準拠し、型ヒントと docstring を付与する
+各スキルは SKILL.md の frontmatter に metadata.version を持ち、同一リリースでは全スキルのバージョンを揃えて管理します。
