@@ -64,6 +64,28 @@ metadata:
 
 ---
 
+## 整合性チェック（必須実行）
+
+詳細設計書が完成したら、以下のスクリプトを **bash で必ず実行する**：
+
+```bash
+python3 .agents/skills/isdd-common/scripts/rq_ds_link_checker.py \
+  docs/requirements.md \
+  docs/detail_design.md
+```
+
+**出力**:
+- 対応欠落一覧：マッピングされていないRQ-*/DS-*
+- 重複一覧：複数のRQ-*にマッピングされているDS-*
+- 不整合一覧：マッピング構造の矛盾
+- 検証サマリ：総数、欠落数、重複数、不整合数
+
+**完了ゲート（レビューへ進む前に全て満たすこと）**：
+
+- [ ] `rq_ds_link_checker.py` を bash で実行し、実行ログをレスポンスに記載した
+- [ ] 問題が検出された場合は設計書を修正して再実行し、欠落・重複・不整合が0件になった
+- [ ] 問題なしを確認してからレビューへ進む
+
 ## ドキュメント作成ルール
 
 `isdd-common/references/document-rules.md` のルールに従い、必ず遵守すること。

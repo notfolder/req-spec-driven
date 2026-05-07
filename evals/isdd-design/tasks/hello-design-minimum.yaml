@@ -1,0 +1,71 @@
+id: isdd-design-hello-001
+name: Hello World 詳細設計
+description: |
+  docs/requirements.md から詳細設計書を生成し、
+  DS-* ID体系・RQ-DS対応・rq_ds_link_checker.py の実行を検証する。
+
+tags:
+  - isdd
+  - design
+  - minimum
+
+inputs:
+  prompt: |
+    isdd-designを実行してください。
+    対象: docs/requirements.md
+
+  context:
+    task_type: design-minimum
+  files:
+    - path: docs/requirements.md
+    - path: .agents/skills/isdd-common/scripts/rq_ds_link_checker.py
+    - path: .agents/skills/isdd-common/references/id-definitions.md
+    - path: .agents/skills/isdd-common/references/design-chapters.md
+    - path: .agents/skills/isdd-common/references/design-completeness.md
+    - path: .agents/skills/isdd-common/references/document-rules.md
+
+expected:
+  outcomes:
+    - type: task_completed
+
+graders:
+  - name: docs_generated
+    type: file
+    config:
+      must_exist:
+        - "docs/detail_design.md"
+
+  - name: ds_md_ids
+    type: file
+    config:
+      content_patterns:
+        - path: "docs/detail_design.md"
+          must_match:
+            - "DS-MD-[A-Z]"
+
+  - name: ds_fn_ids
+    type: file
+    config:
+      content_patterns:
+        - path: "docs/detail_design.md"
+          must_match:
+            - "DS-FN-[A-Z]"
+
+  - name: rq_ds_mapping
+    type: file
+    config:
+      content_patterns:
+        - path: "docs/detail_design.md"
+          must_match:
+            - "\\|.*DS-[A-Z].*RQ-[A-Z]"
+
+  - name: rq_ds_checker_executed
+    type: prompt
+    config:
+      continue_session: true
+      prompt: |
+        セッションのツール呼び出し履歴を確認し、bash ツールで
+        `rq_ds_link_checker.py` を実行するコマンドが呼ばれたかどうかを評価してください。
+
+        実行されていた場合は set_waza_grade_pass を呼び出してください。
+        実行されていなかった場合は set_waza_grade_fail を呼び出してください。
