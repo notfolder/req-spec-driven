@@ -1,0 +1,125 @@
+id: isdd-change-design-hello-001
+name: Hello World 時刻表示追加 変更設計
+description: |
+  既存の Hello World 設計書に対して、時刻表示追加の変更要件定義書をもとに
+  change_detail_design.md の生成・DS-* ID付与・整合性チェッカー通過を検証する。
+
+tags:
+  - isdd
+  - change-design
+  - minimum
+
+inputs:
+  prompt: |
+    isdd-change-designを実行してください。
+    変更要件定義書は .history/20260508-add-timestamp-to-hello-world/change_requirements.md にあります。
+
+  context:
+    task_type: change-design-minimum
+  files:
+    - path: docs/requirements.md
+    - path: docs/detail_design.md
+    - path: .history/20260508-add-timestamp-to-hello-world/change_requirements.md
+    - path: .agents/skills/isdd-change-design/SKILL.md
+    - path: .agents/skills/isdd-common/SKILL.md
+    - path: .agents/skills/isdd-common/references/design-chapters.md
+    - path: .agents/skills/isdd-common/references/design-completeness.md
+    - path: .agents/skills/isdd-common/references/design-tasks-rules.md
+    - path: .agents/skills/isdd-common/references/document-rules.md
+    - path: .agents/skills/isdd-common/references/hearing-complexity-rules.md
+    - path: .agents/skills/isdd-common/references/id-definitions.md
+    - path: .agents/skills/isdd-common/references/requirements-chapters.md
+    - path: .agents/skills/isdd-common/scripts/rq_ds_link_checker.py
+    - path: .agents/skills/isdd-common/scripts/rq_integrity_checker.py
+    - path: .agents/skills/isdd-common/scripts/trace_comment_coverage_checker.py
+
+expected:
+  outcomes:
+    - type: task_completed
+
+graders:
+  - name: change_detail_design_generated
+    type: prompt
+    config:
+      continue_session: true
+      prompt: |
+        bash ツールで `find .history -name change_detail_design.md` を実行し、
+        ファイルが存在するか確認してください。
+
+        存在する場合は set_waza_grade_pass を呼び出してください。
+        存在しない場合は set_waza_grade_fail を呼び出してください。
+
+  - name: tasks_generated
+    type: prompt
+    config:
+      continue_session: true
+      prompt: |
+        bash ツールで `find .history -name tasks.md` を実行し、
+        見つかったファイルの内容を確認してください。
+
+        以下の条件を全て満たす場合は set_waza_grade_pass を呼び出してください。
+        1つでも満たさない場合は set_waza_grade_fail を呼び出してください。
+
+        確認条件:
+        - tasks.md が存在する
+        - ファイル内に docs/requirements.md への反映に関するタスクが記載されている
+        - ファイル内に docs/detail_design.md への反映に関するタスクが記載されている
+
+  - name: ds_ids_present
+    type: prompt
+    config:
+      continue_session: true
+      prompt: |
+        bash ツールで `find .history -name change_detail_design.md` を実行し、
+        見つかったファイルの内容を確認してください。
+
+        以下の条件を全て満たす場合は set_waza_grade_pass を呼び出してください。
+        1つでも満たさない場合は set_waza_grade_fail を呼び出してください。
+
+        確認条件:
+        - RQ-FT-GET-CURRENT-TIME に対応する DS-* ID が1件以上存在する
+        - RQ-FT-BUILD-TIMESTAMPED-MESSAGE に対応する DS-* ID が1件以上存在する
+        - RQ-FT-PRINT-TIMESTAMPED-OUTPUT に対応する DS-* ID が1件以上存在する
+
+  - name: add_delete_markers
+    type: prompt
+    config:
+      continue_session: true
+      prompt: |
+        bash ツールで `find .history -name change_detail_design.md` を実行し、
+        見つかったファイルの内容を確認してください。
+
+        以下の条件を全て満たす場合は set_waza_grade_pass を呼び出してください。
+        1つでも満たさない場合は set_waza_grade_fail を呼び出してください。
+
+        確認条件:
+        - ファイル内に「[追加]」という文字列が存在する
+        - ファイル内に「[削除]」という文字列が存在する
+
+  - name: existing_docs_unchanged
+    type: file
+    config:
+      content_patterns:
+        - path: "docs/detail_design.md"
+          must_match:
+            - "DS-MD-HELLO-MODULE-FT-PRINT-HELLO-WORLD"
+            - "DS-CL-HELLO-WORLD-PRINTER-FT-PRINT-HELLO-WORLD"
+            - "DS-FN-GET-HELLO-MESSAGE-FT-GET-HELLO-MESSAGE"
+          must_not_match:
+            - "\\[追加\\]"
+            - "\\[削除\\]"
+
+  - name: rq_ds_link_checker_pass
+    type: prompt
+    config:
+      continue_session: true
+      prompt: |
+        bash ツールで以下を実行してください。
+
+        1. `find .history -name change_detail_design.md` を実行してファイルのパスを取得する
+        2. 同じディレクトリにある change_requirements.md のパスを構築する
+        3. 以下のコマンドを実行する:
+           python3 .agents/skills/isdd-common/scripts/rq_ds_link_checker.py [change_requirements.mdのパス] [change_detail_design.mdのパス]
+
+        実行結果に「全てのチェックに合格しました」が含まれる場合は set_waza_grade_pass を呼び出してください。
+        ファイルが存在しない場合やチェックに失敗した場合は set_waza_grade_fail を呼び出してください。
