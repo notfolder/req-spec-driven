@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - appnet
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8501:80"
+    depends_on:
+      - backend
+    networks:
+      - appnet
+
+  test_playwright:
+    image: mcr.microsoft.com/playwright:v1.59.0
+    profiles: ["test"]
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - appnet
+
+volumes:
+  backend_data:
+
+networks:
+  appnet:
