@@ -1,6 +1,6 @@
-# isdd スキル群
+# 対話駆動仕様開発 - 要件・設計・ソースをIDで一貫追跡する
 
-isdd（Interview-driven Spec-driven Development）は、インタビュー駆動で仕様を確定し、要件から設計、設計から実装へと一貫して追跡可能な形で開発を進めるための手法です。
+isdd（Interview-driven Spec-driven Development）はインタビュー駆動で仕様を確定して、要件・設計・ソースをIDで一貫追跡しながら、開発を進める手法です。
 
 このディレクトリは、isdd を実行するためのスキル群の原本を APM 形式で管理します。
 
